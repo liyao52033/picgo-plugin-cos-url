@@ -142,6 +142,6 @@ export function getCosPutObjectParams(ctx: PicGo, img: IImgInfo, sign: boolean, 
     Sign: sign,
     Query: query,
     Expires: expireSeconds,
-    Headers: { 'Content-Disposition': 'attachment' }
+    Headers: { 'Content-Disposition': `attachment;filename="${img.fileName}"` }
   }
 }

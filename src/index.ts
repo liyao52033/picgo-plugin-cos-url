@@ -14,7 +14,7 @@ const handle = (ctx: PicGo): void => {
   } else {
     ctx.log.info(`OSS外链: expireSeconds=${expireSeconds}秒`)
   }
-  
+
   const uploaderKey = ctx.getConfig<string>('picBed.current')
   const processor = processors.select(
     uploaderKey === 'cos-upload' ? 'tcyun' : uploaderKey
@@ -32,7 +32,6 @@ const handle = (ctx: PicGo): void => {
   ctx.log.info(`OSS外链: 匹配到处理程序: ${processor.key}=${processor.name}`)
   ctx.output.forEach(img => {
     ctx.log.info(`OSS外链: fileName=${img.fileName}`)
-    ctx.log.info(`OSS外链: originUrl=${img.imgUrl}`)
     img.imgUrl = processor.process(ctx, img, expireSeconds, sign)
     ctx.log.info(`OSS外链: outsideUrl=${img.imgUrl}`)
   })
@@ -64,18 +63,56 @@ const config = (ctx: PicGo): IPluginConfig[] => {
   ]
 }
 
+const cunstomCosConfig = (ctx: PicGo) => {
+  return [
+    {
+      name: "cos_tips1",
+      type: "confirm",
+      alias: "1. 请先去腾讯云COS配置参数",
+      default: true,
+      required: false
+    },
+     {
+      name: "cos_tips2",
+      type: "confirm", 
+      alias: "2. 使用时记得将图床设为默认图床",
+      default: true,
+      required: false
+    },
+    {
+      name: "cos_tips3",
+      type: "confirm", 
+      alias: "3. 用此图床上传的图片在相册中删除时会将cos的图片一并删除",
+      default: false,
+      required: false
+    },
+   
+    {
+      name: "cos_tips4",
+      type: "confirm", 
+      alias: "4. 浏览器直接打开图片时是下载而不是预览",
+      default: false,
+      required: false
+    },
+  ]
+}
+
 const customAfterUpload = async (ctx: PicGo): Promise<void> => {
   const config = ctx.getConfig<ITcyunConfig>('picBed.tcyun')
   if (!config) {
     ctx.log.warn('未找到腾讯云COS配置, 跳过自定义上传')
+    ctx.emit('notification', {
+      title: 'COS上传失败',
+      body: '请先配置腾讯云cos参数',
+      text: ''
+    })
     return
   }
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const COS = require('cos-nodejs-sdk-v5')
   const cos = new COS({
     SecretId: config.secretId,
-    SecretKey: config.secretKey,
-    Domain: config.customUrl ?? ''
+    SecretKey: config.secretKey
   })
   let sign = ctx.getConfig<boolean>('picgo-plugin-cos-url.sign') || false
   let expireSeconds = ctx.getConfig<number>('picgo-plugin-cos-url.expireSeconds') || 0
@@ -88,7 +125,8 @@ const customAfterUpload = async (ctx: PicGo): Promise<void> => {
       const putParams = getCosPutObjectParams(ctx, img, sign, expireSeconds)
       const body = getBodyFromImage(img, ctx)
       if (!body) {
-        ctx.log.warn(`跳过上传, 未获取到图片内容: ${img.fileName}`)
+        const errorMsg = `未获取到图片内容: ${img.fileName}`
+        ctx.log.warn(`跳过上传, ${errorMsg}`)
         continue
       }
       await new Promise((resolve, reject) => {
@@ -97,16 +135,11 @@ const customAfterUpload = async (ctx: PicGo): Promise<void> => {
           Region: putParams.Region,
           Key: putParams.Key,
           Body: body,
-          ContentDisposition: 'attachment'
+          ContentDisposition: `attachment;filename="${img.fileName}"`
         }
           , (err: any, data: any) => {
             if (err) {
               ctx.log.warn('COS putObject 上传失败: ' + err.message)
-              ctx.emit('notification', {
-                title: 'COS上传失败',
-                body: err.message || String(err),
-                text: ''
-              })
               reject(err)
             } else {
               // 合并外链处理逻辑
@@ -119,7 +152,13 @@ const customAfterUpload = async (ctx: PicGo): Promise<void> => {
           })
       })
     } catch (e: any) {
-      ctx.log.warn('COS putObject 异常: ' + (e && e.message ? e.message : String(e)))
+      const errorMsg = `上传图片异常: ${e && e.message ? e.message : String(e)}`
+      ctx.log.warn('COS putObject 异常: ' + errorMsg)
+      ctx.emit('notification', {
+        title: 'COS上传失败',
+        body: errorMsg,
+        text: ''
+      })
     }
   }
 }
@@ -134,8 +173,7 @@ async function deleteCosImage(ctx: PicGo, img: IImgInfo | IImgInfo[]) {
     const COS = require('cos-nodejs-sdk-v5')
     const cos = new COS({
       SecretId: config.secretId,
-      SecretKey: config.secretKey,
-      Domain: config.customUrl ?? ''
+      SecretKey: config.secretKey
     })
     for (const item of imgs) {
       let key = (config.path ?? '') + item.fileName
@@ -156,7 +194,13 @@ async function deleteCosImage(ctx: PicGo, img: IImgInfo | IImgInfo[]) {
       })
     }
   } catch (e: any) {
-    ctx.log.warn('COS deleteObject 异常: ' + (e && e.message ? e.message : String(e)))
+    const errorMsg = `删除图片异常: ${e && e.message ? e.message : String(e)}`
+    ctx.log.warn('COS deleteObject 异常: ' + errorMsg)
+    ctx.emit('notification', {
+      title: 'COS删除失败',
+      body: errorMsg,
+      text: ''
+    })
   }
 }
 
@@ -164,7 +208,8 @@ export = (ctx: PicGo) => {
   const register = (): void => {
     ctx.helper.uploader.register('cos-upload', {
       handle: customAfterUpload,
-      name: 'COS自定义上传',
+      config: cunstomCosConfig,
+      name: 'COS自定义上传'
     })
 
     // 监听 PicGo 删除图片事件
@@ -172,13 +217,6 @@ export = (ctx: PicGo) => {
       await deleteCosImage(ctx, img)
     })
 
-    // if (!ctx.helper.afterUploadPlugins.get('oss-outside-url')) {
-    //   ctx.helper.afterUploadPlugins.register('oss-outside-url', {
-    //     handle,
-    //     name: 'OSS外链',
-    //     config
-    //   })
-    // }
   }
   return {
     register,
