@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node"],
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "resolveJsonModule": true,
@@ -8,6 +9,7 @@
     "sourceMap": false,
     "target": "es2017",
     "declaration": true,
+    "rootDir": "src",
     "outDir": "dist",
     // It's shit.
     // "baseUrl": "src",

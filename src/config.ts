@@ -108,7 +108,7 @@ export class Processors {
     new QiniuProcessor()
   ]
 
-  select(key: string): Processor {
+  select(key: string): Processor | undefined {
     return this.values.find(value => value.key === key)
   }
 }
@@ -120,10 +120,11 @@ export function getBodyFromImage(img: IImgInfo, ctx: PicGo): Buffer | null {
   if (img.base64Image) {
     try {
       return Buffer.from(img.base64Image, 'base64')
-    } catch (e) {
-      ctx.log.warn(`base64解码失败: ${e.message}`)
+    } catch (e: unknown) {
+      ctx.log.warn(`base64解码失败: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
+  return null
 }
 
 export function getCosPutObjectParams(ctx: PicGo, img: IImgInfo, sign: boolean, expireSeconds: number) {

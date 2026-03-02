@@ -1,6 +1,6 @@
 {
   "name": "picgo-plugin-cos-url",
-  "version": "1.2.9",
+  "version": "1.3.0",
   "description": "将COS的私有资源链接转成外链的PicGo插件，支持阿里云OSS、腾讯云COS、七牛云Kodo\n注意：该插件没有充分测试网址后缀的场景，设置了网址后缀可能会导致非预期的结果发生",
   "main": "dist/index.js",
   "publishConfig": {
@@ -26,25 +26,26 @@
   "author": "liyao52033",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "16.9.1",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
-    "eslint": "^8.25.0",
+    "@types/ali-oss": "^6.23.3",
+    "@types/node": "^25.3.3",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^10.0.2",
     "eslint-config-standard": "^17.0.0",
-    "eslint-config-standard-with-typescript": "^23.0.0",
+    "eslint-config-standard-with-typescript": "^43.0.1",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^15.3.0",
+    "eslint-plugin-n": "^17.24.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.1.0",
-    "eslint-plugin-standard": "^3.1.0",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-standard": "^5.0.0",
     "fs": "^0.0.1-security",
-    "picgo": "^1.5.9",
-    "typescript": "^4.8.4"
+    "picgo": "^2.0.3",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "ali-oss": "^6.23.0",
     "cos-nodejs-sdk-v5": "^2.15.4",
-    "qiniu": "^7.14.0",
+    "qiniu": "^7.15.1",
     "upyun": "^3.4.6"
   }
 }

@@ -3,7 +3,7 @@
 A PicGo plugin for cos private resource url.
 
 将COS的私有资源链接转成外链的PicGo插件，支持阿里云OSS、`腾讯云COS(推荐)`、七牛云Kodo，如果使用腾讯云COS，先配置参数然后选择`COS自定义上传`
-![cos](https://img.xiaoying.org.cn/img/20250626224930976.png)
+![](https://cnb.xiaoying.org.cn/img/20260303001009544.avif)
 
 腾讯云COS特有功能（推荐开启防盗链）
 1、可选择是否开启签名
@@ -15,9 +15,7 @@ A PicGo plugin for cos private resource url.
 
 更多需求，欢迎PR或提ISSUE。
 
----
-
-## 例如
+## 配置
 
 过期时间设置永久：`expireSeconds=0`
 
@@ -25,17 +23,10 @@ A PicGo plugin for cos private resource url.
 
 开启腾讯云签名选择`开启`，否则选择`关闭`
 
----
+![](https://cnb.xiaoying.org.cn/img/20260303001118579.avif)
 
-## 修改配置参数后生效
+`expireSeconds`，过期秒数，默认0（永久）
+`sign`，是否开启腾讯云签名，默认关闭
 
-![配置](https://img.xiaoying.org.cn/img/20250626222527405.png)
 
-expireSeconds，过期秒数，默认0（永久）
-sign，是否开启腾讯云签名，默认关闭
-
----
-### 版权声明
-
-MIT
 

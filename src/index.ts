@@ -1,4 +1,4 @@
-import { PicGo } from 'picgo'
+import { PicGo, IPicGo } from 'picgo'
 import { IPluginConfig, ITcyunConfig } from 'picgo/dist/utils/interfaces'
 import { IImgInfo } from 'picgo/dist/types'
 import { Config, ListItem, Processors, getCosPutObjectParams, getBodyFromImage } from './config'
@@ -63,7 +63,7 @@ const config = (ctx: PicGo): IPluginConfig[] => {
   ]
 }
 
-const cunstomCosConfig = (ctx: PicGo) => {
+const cunstomCosConfig = (ctx: IPicGo) => {
   return [
     {
       name: "cos_tips1",
@@ -72,24 +72,24 @@ const cunstomCosConfig = (ctx: PicGo) => {
       default: true,
       required: false
     },
-     {
+    {
       name: "cos_tips2",
-      type: "confirm", 
+      type: "confirm",
       alias: "2. 使用时记得将图床设为默认图床",
       default: true,
       required: false
     },
     {
       name: "cos_tips3",
-      type: "confirm", 
+      type: "confirm",
       alias: "3. 用此图床上传的图片在相册中删除时会将cos的图片一并删除",
       default: false,
       required: false
     },
-   
+
     {
       name: "cos_tips4",
-      type: "confirm", 
+      type: "confirm",
       alias: "4. 浏览器直接打开图片时是下载而不是预览",
       default: false,
       required: false
@@ -97,7 +97,7 @@ const cunstomCosConfig = (ctx: PicGo) => {
   ]
 }
 
-const customAfterUpload = async (ctx: PicGo): Promise<void> => {
+const customAfterUpload = async (ctx: IPicGo): Promise<any> => {
   const config = ctx.getConfig<ITcyunConfig>('picBed.tcyun')
   if (!config) {
     ctx.log.warn('未找到腾讯云COS配置, 跳过自定义上传')
@@ -122,8 +122,8 @@ const customAfterUpload = async (ctx: PicGo): Promise<void> => {
   }
   for (const img of ctx.output) {
     try {
-      const putParams = getCosPutObjectParams(ctx, img, sign, expireSeconds)
-      const body = getBodyFromImage(img, ctx)
+      const putParams = getCosPutObjectParams(ctx as PicGo, img, sign, expireSeconds)
+      const body = getBodyFromImage(img, ctx as PicGo)
       if (!body) {
         const errorMsg = `未获取到图片内容: ${img.fileName}`
         ctx.log.warn(`跳过上传, ${errorMsg}`)
@@ -146,7 +146,7 @@ const customAfterUpload = async (ctx: PicGo): Promise<void> => {
               if (data && data.Location) {
                 img.imgUrl = 'https://' + data.Location
               }
-              handle(ctx)
+              handle(ctx as PicGo)
               resolve(data)
             }
           })
@@ -214,7 +214,10 @@ export = (ctx: PicGo) => {
 
     // 监听 PicGo 删除图片事件
     ctx.on('remove', async (img: any) => {
-      await deleteCosImage(ctx, img)
+      const uploaderKey = ctx.getConfig<string>('picBed.current');
+      if (uploaderKey === 'cos-upload') {
+        await deleteCosImage(ctx, img)
+      }
     })
 
   }
